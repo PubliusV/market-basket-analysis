@@ -11,6 +11,10 @@ st.sidebar.warning("Please remember that Market Basket Analysis primarily studie
 st.header(":wave: Welcome to Ben's Market Basket Analysis App!")
 st.info("Real World Adaptation: This tool is a modified form of a tool I created in my work at Summersalt, a women's swimwear/apparel start-up. I've adapted it to use a publicly available grocery shopping dataset to ensure the privacy of their data.")
 st.write("""You can use this tool to find relationships in our customers' purchasing behavior. For example, assuming someone buys milk, how likely are they also to buy eggs?""")
+
+st.sidebar.info("You can find the source code for this dashboard on my GitHub:")
+st.sidebar.link_button("GitHub Source","https://github.com/PubliusV/market-basket-analysis")
+
 ## The Grocery data is a row-wise collection of transactions, where each item has its own column
 ## In order to use the data, we want to read each row as a list
 with open('groceries.csv', newline='') as f:
