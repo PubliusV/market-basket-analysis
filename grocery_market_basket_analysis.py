@@ -5,15 +5,14 @@ import mlxtend.preprocessing
 import pandas as pd
 import plotly.express as px
 
-
-st.sidebar.warning("Please remember that Market Basket Analysis primarily studies the correlation between items in someone's cart and is not a robust means of understanding causality in purchase behavior.")
-
 st.header(":wave: Welcome to Ben's Market Basket Analysis App!")
 st.info("Real World Adaptation: This tool is a modified form of a tool I created in my work at Summersalt, a women's swimwear/apparel start-up. I've adapted it to use a publicly available grocery shopping dataset to ensure the privacy of their data.")
 st.write("""You can use this tool to find relationships in our customers' purchasing behavior. For example, assuming someone buys milk, how likely are they also to buy eggs?""")
 
 st.sidebar.info("You can find the source code for this dashboard on my GitHub:")
 st.sidebar.link_button("GitHub Source","https://github.com/PubliusV/market-basket-analysis")
+
+st.sidebar.warning("Please remember that Market Basket Analysis primarily studies the correlation between items in someone's cart and is not a robust means of understanding causality in purchase behavior.")
 
 ## The Grocery data is a row-wise collection of transactions, where each item has its own column
 ## In order to use the data, we want to read each row as a list
