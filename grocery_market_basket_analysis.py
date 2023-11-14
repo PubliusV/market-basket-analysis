@@ -77,40 +77,32 @@ st.write("Use the filter in the side-bar to choose a product to analyze.")
 item_df.sort_values(by = 'confidence',ascending=False, inplace = True )
 item_df.reset_index(inplace = True)
 
-# Exclude bad rules (Lift <=1)
-st.write(item_df[item_df['lift']>1][['rule','confidence','lift','conviction']])
 
-# We need three columns...
+
+# We need three columns for metrics.
+# We want these to show up before the table, so we create the columns now
+# and fill them after we write out the table to the page.
 c1, c2, c3 = st.columns(3)
 
-# For metrics!
+# Exclude bad rules (Lift <=1) & write to a table
+st.write(item_df[item_df['lift']>1][['rule','confidence','lift','conviction']])
+
+
 # Create a metric for the top 3 rules
 
 # Build a metric in column 1:
-c1.metric(label= item_df['con_string'][0], # by pulling the complement string into the metric label
-          value=str(round(item_df['confidence'][0]*100,2))+"%" # And passing the formatted confidence score
-          )
-# Add a caption to it, using the confidence score, the antecedent string, and the consequent string
-c1.caption("<b> "+str(round(item_df['confidence'][0]*100,2))+
-           "%</b>"+" of customers who bought "+item_df['ant_string'][0]+
-           " also bought <b>"+item_df['con_string'][0], unsafe_allow_html=True
-           )
-# TODO: This can probably be loop-ified. Will I ever do that for a toy dataset? Probably not, but who knows.
+# Put the column objects in a list for the loop
+columns = [c1, c2, c3]
+n_iter = 0
 
-# Column 2 metric - see notes above
-c2.metric(label= item_df['con_string'][1], 
-          value=str(round(item_df['confidence'][1]*100,2))+"%"
-          )
-c2.caption("<b> "+str(round(item_df['confidence'][1]*100,2))+
-           "%</b>"+" of customers who bought "+item_df['ant_string'][1]+
-           " also bought <b>"+item_df['con_string'][1], unsafe_allow_html=True
-           )
-
-# Column 3 metric - see notes above
-c3.metric(label= item_df['con_string'][2], 
-          value=str(round(item_df['confidence'][2]*100,2))+"%"
-          )
-c3.caption("<b> "+str(round(item_df['confidence'][2]*100,2))+
-           "%</b>"+" of customers who bought "+item_df['ant_string'][2]+
-           " also bought <b>"+item_df['con_string'][2], unsafe_allow_html=True
-           )
+# initiate a loop through the columns. Use an iterator so we can reference the index of the item dataframe
+for column in columns:
+    column.metric(label= item_df['con_string'][n_iter], # by pulling the complement string of the top rule into the metric label
+            value=str(round(item_df['confidence'][n_iter]*100,2))+"%" # And passing the formatted confidence score
+            )
+    # Add a caption to it, using the confidence score, the antecedent string, and the consequent string
+    column.caption("<b> "+str(round(item_df['confidence'][n_iter]*100,2))+
+            "%</b>"+" of customers who bought "+item_df['ant_string'][n_iter]+
+            " also bought <b>"+item_df['con_string'][n_iter], unsafe_allow_html=True
+            )
+    n_iter+=1
