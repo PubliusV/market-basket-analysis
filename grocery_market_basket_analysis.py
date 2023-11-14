@@ -21,9 +21,9 @@ with open('groceries.csv', newline='') as f:
 
 encode_=mlxtend.preprocessing.TransactionEncoder()
 encode_arr=encode_.fit_transform(data)
-
 encode_df=pd.DataFrame(encode_arr, columns=encode_.columns_)
 
+## Run the apriori algorithm
 md_minsup=mlxtend.frequent_patterns.apriori(encode_df,
                                            min_support=0.01, 
                                            max_len = 2,
@@ -32,13 +32,16 @@ md_minsup=mlxtend.frequent_patterns.apriori(encode_df,
 rules=mlxtend.frequent_patterns.association_rules(
 md_minsup, metric="confidence",min_threshold=0.06,support_only=False)
 
+## Extract the rules as strings for user legibility -- MLXtend outputs the antecedent and consequent as frozenset() types
 rules['ant_string'] = rules['antecedents'].apply(lambda x: list(x)[0]).astype("unicode")
 rules['con_string'] = rules['consequents'].apply(lambda x: list(x)[0]).astype("unicode")
 rules['rule'] = rules['ant_string']+" -> "+rules['con_string']
 
+## Use the antecedent strings as a filter for the product-level analysis later
 item_filter = st.sidebar.selectbox("Please choose an Item to Analyze:",rules['ant_string'].unique())
 item_df = rules[rules['ant_string']==item_filter]
 
+## Make some notes in the sidebar
 st.sidebar.markdown("""### Some Important Terms
 **Confidence:** The probability of a customer Purchasing Y, given they purchased X. E.G. If the confidence of the rule `Milk -> Bread` is 45% then we would expect 45% of customers buying milk to also buy bread.
 
@@ -46,31 +49,68 @@ st.sidebar.markdown("""### Some Important Terms
 
 **Conviction:** A similar measure to lift, but more demanding. A high conviction value (>1) for the rule `X -> Y` means that we believe Y to be highly dependent on X.""")
 
+#############################
+## Rules Overview Section  ##
+#############################
 st.subheader("Top 25 Rules (by Conviction)")
 st.write("The best overall rules look at all carts and find the rules which are most likely to be real associations (rather than random chance). For simplicity, we're only considering rules with one antecedent and one consequent, so only rules like `X -> Y` and not like `[X,Y] -> Z` or `Z -> [X,Y]`.")
+
+# Get organized
 rules.sort_values(by = ['conviction'], ascending=False, inplace=True)
 
+# Exclude bad rules (Lift <=1)
 st.write(rules[rules['lift']>1][['rule','confidence','lift','conviction']].head(25))
 
+# Ooh pretty picture
 fig = px.bar(rules.head(10).sort_values(by ='confidence',ascending=False), x='rule', y='confidence', 
             text_auto=".1%", title="Confidence of Top 10 Rules <br><sup>Confidence: When someone buys X, what percent of the time do they buy Y with it? (rule: X -> Y)</sup>")
 st.plotly_chart(fig)
 
+#########################
+## Single Item Section ##
+#########################
+
 st.subheader("Single Item Analysis")
 st.write("Use the filter in the side-bar to choose a product to analyze.")
 
+# Get organized (& reset the index so our references work)
 item_df.sort_values(by = 'confidence',ascending=False, inplace = True )
 item_df.reset_index(inplace = True)
 
-c1, c2, c3 = st.columns(3)
-
+# Exclude bad rules (Lift <=1)
 st.write(item_df[item_df['lift']>1][['rule','confidence','lift','conviction']])
 
-c1.metric(label= item_df['con_string'][0], value=str(round(item_df['confidence'][0]*100,2))+"%")
-c1.caption("<b> "+str(round(item_df['confidence'][0]*100,2))+"%</b>"+" of customers who bought "+item_df['ant_string'][0]+" also bought <b>"+item_df['con_string'][0], unsafe_allow_html=True)
+# We need three columns...
+c1, c2, c3 = st.columns(3)
 
-c2.metric(label= item_df['con_string'][1], value=str(round(item_df['confidence'][1]*100,2))+"%")
-c2.caption("<b> "+str(round(item_df['confidence'][1]*100,2))+"%</b>"+" of customers who bought "+item_df['ant_string'][1]+" also bought <b>"+item_df['con_string'][1], unsafe_allow_html=True)
+# For metrics!
+# Create a metric for the top 3 rules
 
-c3.metric(label= item_df['con_string'][2], value=str(round(item_df['confidence'][2]*100,2))+"%")
-c3.caption("<b> "+str(round(item_df['confidence'][2]*100,2))+"%</b>"+" of customers who bought "+item_df['ant_string'][2]+" also bought <b>"+item_df['con_string'][2], unsafe_allow_html=True)
+# Build a metric in column 1:
+c1.metric(label= item_df['con_string'][0], # by pulling the complement string into the metric label
+          value=str(round(item_df['confidence'][0]*100,2))+"%" # And passing the formatted confidence score
+          )
+# Add a caption to it, using the confidence score, the antecedent string, and the consequent string
+c1.caption("<b> "+str(round(item_df['confidence'][0]*100,2))+
+           "%</b>"+" of customers who bought "+item_df['ant_string'][0]+
+           " also bought <b>"+item_df['con_string'][0], unsafe_allow_html=True
+           )
+# TODO: This can probably be loop-ified. Will I ever do that for a toy dataset? Probably not, but who knows.
+
+# Column 2 metric - see notes above
+c2.metric(label= item_df['con_string'][1], 
+          value=str(round(item_df['confidence'][1]*100,2))+"%"
+          )
+c2.caption("<b> "+str(round(item_df['confidence'][1]*100,2))+
+           "%</b>"+" of customers who bought "+item_df['ant_string'][1]+
+           " also bought <b>"+item_df['con_string'][1], unsafe_allow_html=True
+           )
+
+# Column 3 metric - see notes above
+c3.metric(label= item_df['con_string'][2], 
+          value=str(round(item_df['confidence'][2]*100,2))+"%"
+          )
+c3.caption("<b> "+str(round(item_df['confidence'][2]*100,2))+
+           "%</b>"+" of customers who bought "+item_df['ant_string'][2]+
+           " also bought <b>"+item_df['con_string'][2], unsafe_allow_html=True
+           )
